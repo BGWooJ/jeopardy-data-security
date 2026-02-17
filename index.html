@@ -19,34 +19,88 @@
       --tile-hover:#17417f;
       --tile-used:#0e2b5d;
       --panel:#0f2448;
+      --glow:#7bb6ff;
     }
-    html,body { height:100%; background: radial-gradient(1200px 800px at 10% 0%, var(--bg2), var(--bg)); color:var(--text); font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji"; margin:0; }
-    .wrap { max-width: 1100px; margin: 0 auto; padding: 20px; }
+    html,body { height:100%; margin:0; color:var(--text); font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; }
+    body {
+      /* Animated gradient backdrop */
+      background: radial-gradient(1200px 800px at 10% 0%, var(--bg2), var(--bg));
+      animation: bgShift 20s linear infinite alternate;
+      overflow-x: hidden;
+    }
+    @keyframes bgShift {
+      0% { background: radial-gradient(1200px 800px at 10% 0%, var(--bg2), var(--bg)); }
+      100% { background: radial-gradient(1200px 800px at 90% 100%, var(--bg), var(--bg2)); }
+    }
+    /* Stars layer */
+    .stars { position: fixed; inset: 0; pointer-events:none; z-index:0; }
+    .stars::before, .stars::after {
+      content:""; position:absolute; inset:0;
+      background:
+        radial-gradient(2px 2px at 20% 30%, rgba(255,255,255,.7), transparent 50%),
+        radial-gradient(2px 2px at 70% 20%, rgba(255,255,255,.6), transparent 50%),
+        radial-gradient(2px 2px at 40% 70%, rgba(255,255,255,.5), transparent 50%),
+        radial-gradient(2px 2px at 85% 60%, rgba(255,255,255,.55), transparent 50%),
+        radial-gradient(2px 2px at 10% 80%, rgba(255,255,255,.45), transparent 50%);
+      opacity:.25;
+      animation: twinkle 6s ease-in-out infinite;
+    }
+    .stars::after { animation-duration: 8s; opacity:.18; }
+    @keyframes twinkle {
+      0%,100% { filter:brightness(1); }
+      50% { filter:brightness(1.5); }
+    }
+
+    .wrap { position:relative; z-index:1; max-width: 1150px; margin: 0 auto; padding: 20px; }
     header { display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; }
-    header h1 { margin:0; font-weight:800; letter-spacing:0.5px; }
+    header h1 { margin:0; font-weight:800; letter-spacing:0.5px; text-shadow: 0 0 12px rgba(123,182,255,0.35); }
     .badge { color:var(--bg); background:linear-gradient(90deg, #ffdf7b, var(--accent)); padding:6px 10px; border-radius:999px; font-weight:700; font-size:.9rem; }
     .controls { display:flex; gap:8px; flex-wrap:wrap; }
-    button, .btn { background:var(--primary); color:var(--text); border:none; padding:10px 14px; border-radius:8px; font-weight:700; cursor:pointer; box-shadow: 0 4px 0 #072a63; transition: transform .05s ease, background .2s ease; }
+    button, .btn { background:var(--primary); color:var(--text); border:none; padding:10px 14px; border-radius:8px; font-weight:700; cursor:pointer; box-shadow: 0 4px 0 #072a63; transition: transform .05s ease, background .2s ease, box-shadow .2s ease; }
     button:active { transform: translateY(1px); box-shadow:0 3px 0 #072a63; }
     button.secondary { background:#17417f; box-shadow:0 4px 0 #0c2a57; }
     button.danger { background:var(--danger); box-shadow:0 4px 0 #9c2a2a; }
     button.success { background:var(--success); box-shadow:0 4px 0 #17693f; }
+    button.ghost { background:transparent; border:1px solid #2a4b86; }
     button:disabled { opacity:.5; cursor:not-allowed; }
+
+    .meta { color:var(--muted); font-size:.95rem; display:flex; align-items:center; gap:10px; }
+
     .teams { display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; margin:16px 0 20px; }
     .team { background:var(--panel); border:1px solid #17345f; border-radius:10px; padding:10px; }
     .team h3 { margin:0 0 8px; display:flex; align-items:center; justify-content:space-between; gap:8px; }
     .team input[type="text"] { width:68%; background:#061a3c; color:var(--text); border:1px solid #2a4b86; border-radius:8px; padding:6px 8px; }
-    .score { font-size:1.2rem; font-weight:800; color:var(--accent); }
+    .score { font-size:1.2rem; font-weight:800; color:var(--accent); text-shadow: 0 0 6px rgba(245,194,66,0.4); }
+
     .board { display:grid; grid-template-columns: repeat(5, 1fr); gap:8px; }
-    .cat { background:linear-gradient(180deg, #153a79, #0e2a5a); border:1px solid #1e4e96; border-radius:10px; text-align:center; padding:10px; font-weight:800; min-height:64px; display:flex; align-items:center; justify-content:center; }
-    .tile { background:linear-gradient(180deg, var(--tile), #0c2e5e); border:1px solid #1e4e96; border-radius:10px; text-align:center; padding:18px 8px; font-weight:900; font-size:1.4rem; color:var(--accent); cursor:pointer; display:flex; align-items:center; justify-content:center; min-height:90px; }
-    .tile:hover { background:var(--tile-hover); }
-    .tile.used { background:var(--tile-used); color:#567; cursor:default; }
+    .cat {
+      background:linear-gradient(180deg, #153a79, #0e2a5a);
+      border:1px solid #1e4e96; border-radius:10px; text-align:center; padding:10px; font-weight:800; min-height:64px;
+      display:flex; align-items:center; justify-content:center; position:relative;
+    }
+    .cat::after {
+      content:""; position:absolute; inset:-2px; border-radius:12px;
+      box-shadow: 0 0 14px rgba(123,182,255,0.3), inset 0 0 10px rgba(123,182,255,0.15);
+      opacity:.7;
+    }
+
+    .tile {
+      background:linear-gradient(180deg, var(--tile), #0c2e5e);
+      border:1px solid #1e4e96; border-radius:10px;
+      text-align:center; padding:18px 8px; font-weight:900; font-size:1.4rem; color:var(--accent);
+      cursor:pointer; display:flex; align-items:center; justify-content:center; min-height:90px;
+      transition: transform .15s ease, box-shadow .2s ease, filter .2s ease;
+      box-shadow: 0 6px 0 #0a2a54;
+    }
+    .tile:hover { transform: translateY(-2px) scale(1.02); box-shadow:0 8px 0 #0a2a54; filter: drop-shadow(0 0 6px rgba(245,194,66,.35)); }
+    .tile.used {
+      background:var(--tile-used); color:#567; cursor:default; transform:none; filter:none; box-shadow:0 4px 0 #0a2a54;
+    }
     .grid { display:grid; grid-template-columns: repeat(5, 1fr); gap:8px; margin-top:8px; }
-    .footer { margin-top:16px; color:var(--muted); font-size:.9rem; }
+
     /* Modal */
     .modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; align-items:center; justify-content:center; z-index:1000; }
-    .modal { width:min(780px, 92vw); background:linear-gradient(180deg, #153a79, #0f2448); border:2px solid #1f4a91; border-radius:12px; box-shadow: 0 10px 40px rgba(0,0,0,.4); }
+    .modal { width:min(820px, 92vw); background:linear-gradient(180deg, #153a79, #0f2448); border:2px solid #1f4a91; border-radius:12px; box-shadow: 0 10px 40px rgba(0,0,0,.4); }
     .modal header { padding:14px 16px; border-bottom:1px solid #1e4e96; }
     .modal .content { padding:16px; }
     .modal .actions { display:flex; justify-content:flex-end; gap:8px; padding:14px 16px; border-top:1px solid #1e4e96; }
@@ -57,29 +111,50 @@
     .select-team { display:grid; grid-template-columns: repeat(2, 1fr); gap:8px; }
     .select-team label { display:flex; gap:8px; align-items:center; background:#0b2250; border:1px solid #2b58a6; border-radius:10px; padding:8px; cursor:pointer; }
     .timer { font-weight:800; color:var(--muted); }
+
     /* Final */
     .final-btn { margin-left:8px; }
     .final-panel { display:flex; gap:10px; flex-wrap:wrap; }
     .wager { width:120px; background:#061a3c; color:var(--text); border:1px solid #2a4b86; border-radius:8px; padding:6px 8px; }
+
+    /* Confetti */
+    .confetti { position: fixed; width:10px; height:16px; top:-20px; left:0; opacity:0.9; z-index:2000; will-change: transform; border-radius:2px; }
+
     /* Accessibility helpers */
     .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); border:0; }
-    @media (max-width:900px){ .teams{ grid-template-columns: repeat(2, 1fr);} .board{ grid-template-columns: repeat(5, 1fr);} .tile{ min-height:74px; font-size:1.2rem;} }
-    @media (max-width:640px){ .board{ grid-template-columns: repeat(3, 1fr);} .cat{ grid-column: span 3; } .grid{ grid-template-columns: repeat(3, 1fr);} }
+
+    @media (max-width:900px){
+      .teams{ grid-template-columns: repeat(2, 1fr);}
+      .tile{ min-height:74px; font-size:1.2rem;}
+    }
+    @media (max-width:640px){
+      .board{ grid-template-columns: repeat(3, 1fr);}
+      .cat{ grid-column: span 3; }
+      .grid{ grid-template-columns: repeat(3, 1fr);}
+    }
   </style>
 </head>
 <body>
+  <div class="stars" aria-hidden="true"></div>
   <div class="wrap">
     <header aria-label="Game header">
-      <h1>Jeopardy: <span class="badge">Data Security Edition</span></h1>
+      <div>
+        <h1>Jeopardy: <span class="badge">Data Security Edition</span></h1>
+        <div class="meta">
+          <span id="roundLabel">Round 0 / 25</span>
+          <button id="dazzleBtn" class="ghost" aria-pressed="true">Dazzle Mode: On</button>
+        </div>
+      </div>
       <div class="controls" role="toolbar" aria-label="Game controls">
         <button id="finalBtn" class="final-btn">Final Jeopardy</button>
-        <button id="resetBtn" class="danger">Reset Game</button>
+        <button id="historyBtn" class="secondary">History</button>
+        <button id="resetBtn" class="danger">Reset to Beginning</button>
         <button id="helpBtn" class="secondary">Help</button>
       </div>
     </header>
 
     <section class="teams" aria-label="Teams and scores">
-      <!-- Teams will render here -->
+      <!-- Teams render here -->
     </section>
 
     <section aria-label="Game board">
@@ -87,7 +162,7 @@
       <div class="grid" id="grid"></div>
     </section>
 
-    <p class="footer">Tip: Click a tile to open the clue. Pick a team, reveal the answer, then mark <strong>Correct</strong> (+ value) or <strong>Incorrect</strong> (− value). Final Jeopardy supports wagers up to the current score.</p>
+    <p class="footer">Tip: Click a tile to open the clue. Pick a team, reveal the answer, then mark <strong>Correct</strong> (+ value) or <strong>Incorrect</strong> (− value). Final Jeopardy supports wagers up to the current score. Use <strong>History</strong> to restore to any round, or <strong>Reset to Beginning</strong> for a fresh start.</p>
   </div>
 
   <!-- Question Modal -->
@@ -119,12 +194,13 @@
       <header><h2 id="helpTitle">How to Play</h2></header>
       <div class="content">
         <ul>
+          <li>Each <i>column</i> is a category; values increase down the column ($100 → $500).</li>
           <li>Click any dollar tile to open the clue.</li>
-          <li>Select the team that buzzed in (or the team you decide to award).</li>
+          <li>Select the team that buzzed in (or the team you award).</li>
           <li>Click <strong>Reveal Answer</strong>, then mark <strong>Correct</strong> or <strong>Incorrect</strong>.</li>
           <li>Scores update automatically. Tiles become unavailable after use.</li>
+          <li><strong>History</strong> saves a snapshot after each scored clue—restore any prior round or reset to the beginning.</li>
           <li>For <strong>Final Jeopardy</strong>, enter wagers (up to each team’s current score), reveal the final clue, then score outcomes.</li>
-          <li>Use <strong>Reset Game</strong> to clear the board and scores.</li>
         </ul>
         <p class="footer">This game is for training and fun—no legal or compliance advice. Keep it friendly and inclusive.</p>
       </div>
@@ -147,6 +223,20 @@
         <button id="finalReveal" class="secondary">Reveal Final Answer</button>
         <button id="finalScore" class="success">Score Final</button>
         <button id="finalClose">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- History Modal -->
+  <div id="historyBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="historyTitle">
+    <div class="modal">
+      <header><h2 id="historyTitle">History & Time Travel</h2></header>
+      <div class="content">
+        <p>Restore the game to a prior snapshot (round) or reset to the beginning.</p>
+        <div id="historyList"></div>
+      </div>
+      <div class="actions">
+        <button id="historyClose">Close</button>
       </div>
     </div>
   </div>
@@ -217,7 +307,7 @@
     };
 
     // -------------------------
-    // Persistent State
+    // Persistent State + Snapshots
     // -------------------------
     const initialState = {
       teams: [
@@ -227,13 +317,15 @@
         { id: 3, name: "Team 4", score: 0 },
       ],
       used: {}, // key: "cIdx-qIdx": true
-      final: { wagers: {}, revealed: false, scored: false }
+      final: { wagers: {}, revealed: false, scored: false },
+      snapshots: [], // history timeline
+      effects: true  // dazzle mode
     };
 
     let state = loadState() || structuredClone(initialState);
 
-    function saveState(){ try{ localStorage.setItem("jeop_ds_state", JSON.stringify(state)); }catch(e){} }
-    function loadState(){ try{ return JSON.parse(localStorage.getItem("jeop_ds_state")); }catch(e){ return null; } }
+    function saveState(){ try{ localStorage.setItem("jeop_ds_state_v2", JSON.stringify(state)); }catch(e){} }
+    function loadState(){ try{ return JSON.parse(localStorage.getItem("jeop_ds_state_v2")); }catch(e){ return null; } }
 
     // -------------------------
     // Rendering: Teams & Board
@@ -241,6 +333,8 @@
     const teamsEl = document.querySelector(".teams");
     const catsEl = document.getElementById("categories");
     const gridEl = document.getElementById("grid");
+    const roundLabel = document.getElementById("roundLabel");
+    const dazzleBtn = document.getElementById("dazzleBtn");
 
     function renderTeams(){
       teamsEl.innerHTML = "";
@@ -265,6 +359,7 @@
           state.teams.find(t=>t.id===id).name = e.target.value.trim() || `Team ${id+1}`;
           saveState();
           renderTeamSelect(); // update selects if open
+          renderHistory();    // update history names
         });
       });
     }
@@ -272,14 +367,18 @@
     function renderBoard(){
       catsEl.innerHTML = "";
       gridEl.innerHTML = "";
-      GAME.categories.forEach((cat, cIdx)=>{
+      // Categories in header row
+      GAME.categories.forEach((cat)=>{
         const catDiv = document.createElement("div");
         catDiv.className="cat";
         catDiv.textContent = cat.name;
         catsEl.appendChild(catDiv);
       });
-      GAME.categories.forEach((cat, cIdx)=>{
-        cat.clues.forEach((clue, qIdx)=>{
+      // Grid: rows by value (100..500), columns by category
+      for(let qIdx=0; qIdx<5; qIdx++){
+        for(let cIdx=0; cIdx<5; cIdx++){
+          const cat = GAME.categories[cIdx];
+          const clue = cat.clues[qIdx];
           const key = `${cIdx}-${qIdx}`;
           const tile = document.createElement("div");
           tile.className = "tile" + (state.used[key] ? " used" : "");
@@ -293,8 +392,14 @@
             tile.addEventListener("keydown", (e)=>{ if(e.key==="Enter"||e.key===" "){ openClue.call(tile,e);} });
           }
           gridEl.appendChild(tile);
-        });
-      });
+        }
+      }
+      updateRoundLabel();
+    }
+
+    function updateRoundLabel(){
+      const usedCount = Object.keys(state.used).length;
+      roundLabel.textContent = `Round ${usedCount} / 25`;
     }
 
     function adjustScore(teamId, delta){
@@ -329,7 +434,7 @@
       const cat = GAME.categories[cIdx];
       const clue = cat.clues[qIdx];
 
-      activeClue = { cIdx, qIdx, value: clue.value };
+      activeClue = { cIdx, qIdx, value: clue.value, catName: cat.name };
       modalCat.textContent = cat.name;
       modalValue.textContent = `$${clue.value}`;
       modalQuestion.textContent = clue.q;
@@ -349,6 +454,7 @@
     }
 
     function renderTeamSelect(){
+      if(!teamSelect) return;
       teamSelect.innerHTML = "";
       state.teams.forEach(t=>{
         const wrap = document.createElement("label");
@@ -375,6 +481,8 @@
       if(teamId==null) return;
       adjustScore(teamId, activeClue.value);
       markUsed(activeClue);
+      celebrate(16); // confetti burst on correct
+      saveSnapshot({ type:"clue", result:"correct", teamId, clue:activeClue });
       closeModal();
     });
 
@@ -383,6 +491,7 @@
       if(teamId==null) return;
       adjustScore(teamId, -activeClue.value);
       markUsed(activeClue);
+      saveSnapshot({ type:"clue", result:"incorrect", teamId, clue:activeClue });
       closeModal();
     });
 
@@ -477,11 +586,9 @@
     });
 
     finalScore.addEventListener("click", ()=>{
-      // Ask host to mark each team Correct/Incorrect
-      const resultOk = confirm("Score Final: Click OK to mark winners.\nYou will be asked for each team: OK = Correct (add wager), Cancel = Incorrect (subtract wager).");
-      if(!resultOk){
-        return;
-      }
+      const resultOk = confirm("Score Final: Click OK to mark winners.\nYou will be asked for each team: OK = Correct (add wager), Cancel = Incorrect (−$wager).");
+      if(!resultOk){ return; }
+      const before = snapshotCore(); // snapshot state before scoring
       for(const team of state.teams){
         const wager = state.final.wagers[team.id] || 0;
         const ok = confirm(`Did ${team.name} answer correctly?\nOK = Correct (+$${wager})\nCancel = Incorrect (−$${wager})`);
@@ -490,32 +597,185 @@
       }
       state.final.scored = true;
       saveState();
+      celebrate(24);
+      saveSnapshot({ type:"final", note:"Final Jeopardy scored", before });
       alert("Final Jeopardy scored! 🎉");
     });
 
     // -------------------------
-    // Reset
+    // History & Time Travel
     // -------------------------
-    const resetBtn = document.getElementById("resetBtn");
-    resetBtn.addEventListener("click", ()=>{
-      const ok = confirm("Reset the game board, scores, and wagers?");
+    const historyBackdrop = document.getElementById("historyBackdrop");
+    const historyBtn = document.getElementById("historyBtn");
+    const historyClose = document.getElementById("historyClose");
+    const historyList = document.getElementById("historyList");
+
+    historyBtn.addEventListener("click", ()=>{ renderHistory(); historyBackdrop.style.display="flex"; });
+    historyClose.addEventListener("click", ()=> historyBackdrop.style.display="none");
+    historyBackdrop.addEventListener("click", (e)=>{ if(e.target===historyBackdrop){ historyBackdrop.style.display="none"; } });
+
+    function saveSnapshot(meta){
+      const snap = {
+        id: Date.now(),
+        ts: new Date().toLocaleString(),
+        round: Object.keys(state.used).length,
+        state: snapshotCore(),
+        meta
+      };
+      state.snapshots.push(snap);
+      saveState();
+    }
+
+    function snapshotCore(){
+      // Deep copy minimal state
+      return {
+        teams: state.teams.map(t=>({ id:t.id, name:t.name, score:t.score })),
+        used: { ...state.used },
+        final: JSON.parse(JSON.stringify(state.final)),
+        effects: state.effects
+      };
+    }
+
+    function renderHistory(){
+      historyList.innerHTML = "";
+      if(state.snapshots.length === 0){
+        historyList.innerHTML = `<p class="footer">No snapshots yet. A snapshot is saved after each scored clue and after Final Jeopardy.</p>`;
+        return;
+      }
+      const list = document.createElement("div");
+      list.style.display = "grid";
+      list.style.gap = "8px";
+      state.snapshots.slice().reverse().forEach((snap, idx)=>{
+        const div = document.createElement("div");
+        const meta = snap.meta || {};
+        const label = meta.type==="clue"
+          ? `${snap.ts} · Round ${snap.round} · ${meta.clue ? `$${meta.clue.value} (${meta.clue.catName})` : ""} · ${meta.result} → ${teamName(meta.teamId)}`
+          : `${snap.ts} · Final Jeopardy · ${meta.note || ""}`;
+        div.style.border = "1px solid #2a4b86";
+        div.style.borderRadius = "10px";
+        div.style.padding = "10px";
+        div.style.background = "#0b2250";
+        div.innerHTML = `
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+            <div>
+              <strong>Snapshot:</strong> ${escapeHtml(label)}
+            </div>
+            <div style="display:flex; gap:6px;">
+              <button class="secondary" onclick="restoreSnapshot(${snap.id})">Restore</button>
+              <button class="ghost" onclick="peekSnapshot(${snap.id})">Peek</button>
+            </div>
+          </div>
+        `;
+        list.appendChild(div);
+      });
+      const controls = document.createElement("div");
+      controls.style.marginTop = "10px";
+      controls.innerHTML = `
+        <button class="danger" onclick="resetToBeginning()">Reset to Beginning</button>
+        <button class="ghost" onclick="clearHistory()">Clear History</button>
+      `;
+      historyList.appendChild(list);
+      historyList.appendChild(controls);
+    }
+
+    function teamName(id){
+      const t = state.teams.find(x=>x.id===id);
+      return t ? t.name : "Team";
+    }
+
+    window.restoreSnapshot = function(id){
+      const snap = state.snapshots.find(s=>s.id===id);
+      if(!snap) return alert("Snapshot not found.");
+      const ok = confirm("Restore to this snapshot? Current progress will be replaced.");
+      if(!ok) return;
+      state.teams = snap.state.teams.map(t=>({ id:t.id, name:t.name, score:t.score }));
+      state.used = { ...snap.state.used };
+      state.final = JSON.parse(JSON.stringify(snap.state.final));
+      state.effects = !!snap.state.effects;
+      saveState();
+      renderTeams();
+      renderBoard();
+      renderHistory();
+      alert(`Restored to Round ${snap.round}.`);
+    }
+
+    window.peekSnapshot = function(id){
+      const snap = state.snapshots.find(s=>s.id===id);
+      if(!snap) return alert("Snapshot not found.");
+      const lines = snap.state.teams.map(t=>`${t.name}: $${t.score}`).join("\n");
+      alert(`Round ${snap.round}\n\nScores:\n${lines}`);
+    }
+
+    window.resetToBeginning = function(){
+      const ok = confirm("Reset to beginning? Scores, tiles, final wagers, and history will be cleared.");
       if(!ok) return;
       state = structuredClone(initialState);
       saveState();
       renderTeams();
       renderBoard();
+      renderHistory();
+    }
+
+    window.clearHistory = function(){
+      const ok = confirm("Clear saved history snapshots? This does not change the current state.");
+      if(!ok) return;
+      state.snapshots = [];
+      saveState();
+      renderHistory();
+    }
+
+    // -------------------------
+    // Reset (button)
+    // -------------------------
+    const resetBtn = document.getElementById("resetBtn");
+    resetBtn.addEventListener("click", ()=> resetToBeginning());
+
+    // -------------------------
+    // Dazzle Mode Toggle
+    // -------------------------
+    dazzleBtn.addEventListener("click", ()=>{
+      state.effects = !state.effects;
+      dazzleBtn.setAttribute("aria-pressed", String(state.effects));
+      dazzleBtn.textContent = `Dazzle Mode: ${state.effects ? "On" : "Off"}`;
+      saveState();
     });
 
     // -------------------------
-    // Utils
+    // Utils & Effects
     // -------------------------
-    function escapeHtml(str){ return str.replace(/[&<>'"]/g, c=>({ "&":"&amp;", "<":"&lt;", ">":"&gt;", "'":"&#39;", '"':"&quot;" }[c])); }
+    function escapeHtml(str){ return String(str).replace(/[&<>'"]/g, c=>({ "&":"&amp;", "<":"&lt;", ">":"&gt;", "'":"&#39;", '"':"&quot;" }[c])); }
+
+    // Confetti without external libraries
+    function celebrate(count=20){
+      if(!state.effects) return;
+      for(let i=0;i<count;i++){
+        const el = document.createElement("div");
+        el.className = "confetti";
+        const colors = ["#f5c242","#7bb6ff","#25a45a","#f14c4c","#9b59b6","#1abc9c"];
+        el.style.background = colors[i % colors.length];
+        el.style.left = Math.random()*100 + "vw";
+        el.style.transform = `translateY(-20px) rotate(${Math.random()*360}deg)`;
+        const duration = 2000 + Math.random()*2000;
+        const drift = (Math.random()*2-1)*50; // px
+        el.animate([
+          { transform: `translate(${drift}px, -20px) rotate(0deg)`, opacity: 1 },
+          { transform: `translate(${drift}px, 100vh) rotate(720deg)`, opacity: 0.8 }
+        ], { duration, easing: "cubic-bezier(.2,.7,.2,1)" });
+        document.body.appendChild(el);
+        setTimeout(()=> el.remove(), duration);
+      }
+    }
 
     // -------------------------
     // Init
     // -------------------------
-    renderTeams();
-    renderBoard();
+    function init(){
+      dazzleBtn.setAttribute("aria-pressed", String(state.effects));
+      dazzleBtn.textContent = `Dazzle Mode: ${state.effects ? "On" : "Off"}`;
+      renderTeams();
+      renderBoard();
+    }
+    init();
   </script>
 </body>
 </html>
