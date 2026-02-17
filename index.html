@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Jeopardy: Data Security Edition</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Office-friendly Jeopardy game focused on data security." />
+  <style>
+    :root{
+      --bg:#0b1a3a;
+      --bg2:#0f254e;
+      --primary:#0a3a8a;
+      --accent:#f5c242;
+      --text:#ffffff;
+      --muted:#cbd5e1;
+      --danger:#f14c4c;
+      --success:#25a45a;
+      --tile:#12366d;
+      --tile-hover:#17417f;
+      --tile-used:#0e2b5d;
+      --panel:#0f2448;
+    }
+    html,body { height:100%; background: radial-gradient(1200px 800px at 10% 0%, var(--bg2), var(--bg)); color:var(--text); font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji"; margin:0; }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 20px; }
+    header { display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+    header h1 { margin:0; font-weight:800; letter-spacing:0.5px; }
+    .badge { color:var(--bg); background:linear-gradient(90deg, #ffdf7b, var(--accent)); padding:6px 10px; border-radius:999px; font-weight:700; font-size:.9rem; }
+    .controls { display:flex; gap:8px; flex-wrap:wrap; }
+    button, .btn { background:var(--primary); color:var(--text); border:none; padding:10px 14px; border-radius:8px; font-weight:700; cursor:pointer; box-shadow: 0 4px 0 #072a63; transition: transform .05s ease, background .2s ease; }
+    button:active { transform: translateY(1px); box-shadow:0 3px 0 #072a63; }
+    button.secondary { background:#17417f; box-shadow:0 4px 0 #0c2a57; }
+    button.danger { background:var(--danger); box-shadow:0 4px 0 #9c2a2a; }
+    button.success { background:var(--success); box-shadow:0 4px 0 #17693f; }
+    button:disabled { opacity:.5; cursor:not-allowed; }
+    .teams { display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; margin:16px 0 20px; }
+    .team { background:var(--panel); border:1px solid #17345f; border-radius:10px; padding:10px; }
+    .team h3 { margin:0 0 8px; display:flex; align-items:center; justify-content:space-between; gap:8px; }
+    .team input[type="text"] { width:68%; background:#061a3c; color:var(--text); border:1px solid #2a4b86; border-radius:8px; padding:6px 8px; }
+    .score { font-size:1.2rem; font-weight:800; color:var(--accent); }
+    .board { display:grid; grid-template-columns: repeat(5, 1fr); gap:8px; }
+    .cat { background:linear-gradient(180deg, #153a79, #0e2a5a); border:1px solid #1e4e96; border-radius:10px; text-align:center; padding:10px; font-weight:800; min-height:64px; display:flex; align-items:center; justify-content:center; }
+    .tile { background:linear-gradient(180deg, var(--tile), #0c2e5e); border:1px solid #1e4e96; border-radius:10px; text-align:center; padding:18px 8px; font-weight:900; font-size:1.4rem; color:var(--accent); cursor:pointer; display:flex; align-items:center; justify-content:center; min-height:90px; }
+    .tile:hover { background:var(--tile-hover); }
+    .tile.used { background:var(--tile-used); color:#567; cursor:default; }
+    .grid { display:grid; grid-template-columns: repeat(5, 1fr); gap:8px; margin-top:8px; }
+    .footer { margin-top:16px; color:var(--muted); font-size:.9rem; }
+    /* Modal */
+    .modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; align-items:center; justify-content:center; z-index:1000; }
+    .modal { width:min(780px, 92vw); background:linear-gradient(180deg, #153a79, #0f2448); border:2px solid #1f4a91; border-radius:12px; box-shadow: 0 10px 40px rgba(0,0,0,.4); }
+    .modal header { padding:14px 16px; border-bottom:1px solid #1e4e96; }
+    .modal .content { padding:16px; }
+    .modal .actions { display:flex; justify-content:flex-end; gap:8px; padding:14px 16px; border-top:1px solid #1e4e96; }
+    .q-value { color:var(--accent); font-weight:800; }
+    .pill { display:inline-block; padding:4px 8px; border-radius:999px; border:1px solid #1e4e96; background:#0e2a5a; font-weight:700; }
+    .question { font-size:1.4rem; line-height:1.4; margin:10px 0 12px; }
+    .answer { font-size:1.3rem; line-height:1.4; margin-top:10px; padding:10px; border-radius:10px; background:#0b2250; border:1px dashed #2b58a6; display:none; }
+    .select-team { display:grid; grid-template-columns: repeat(2, 1fr); gap:8px; }
+    .select-team label { display:flex; gap:8px; align-items:center; background:#0b2250; border:1px solid #2b58a6; border-radius:10px; padding:8px; cursor:pointer; }
+    .timer { font-weight:800; color:var(--muted); }
+    /* Final */
+    .final-btn { margin-left:8px; }
+    .final-panel { display:flex; gap:10px; flex-wrap:wrap; }
+    .wager { width:120px; background:#061a3c; color:var(--text); border:1px solid #2a4b86; border-radius:8px; padding:6px 8px; }
+    /* Accessibility helpers */
+    .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); border:0; }
+    @media (max-width:900px){ .teams{ grid-template-columns: repeat(2, 1fr);} .board{ grid-template-columns: repeat(5, 1fr);} .tile{ min-height:74px; font-size:1.2rem;} }
+    @media (max-width:640px){ .board{ grid-template-columns: repeat(3, 1fr);} .cat{ grid-column: span 3; } .grid{ grid-template-columns: repeat(3, 1fr);} }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header aria-label="Game header">
+      <h1>Jeopardy: <span class="badge">Data Security Edition</span></h1>
+      <div class="controls" role="toolbar" aria-label="Game controls">
+        <button id="finalBtn" class="final-btn">Final Jeopardy</button>
+        <button id="resetBtn" class="danger">Reset Game</button>
+        <button id="helpBtn" class="secondary">Help</button>
+      </div>
+    </header>
+
+    <section class="teams" aria-label="Teams and scores">
+      <!-- Teams will render here -->
+    </section>
+
+    <section aria-label="Game board">
+      <div class="board" id="categories"></div>
+      <div class="grid" id="grid"></div>
+    </section>
+
+    <p class="footer">Tip: Click a tile to open the clue. Pick a team, reveal the answer, then mark <strong>Correct</strong> (+ value) or <strong>Incorrect</strong> (− value). Final Jeopardy supports wagers up to the current score.</p>
+  </div>
+
+  <!-- Question Modal -->
+  <div id="modalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal">
+      <header>
+        <h2 id="modalTitle">Clue</h2>
+      </header>
+      <div class="content">
+        <div><span class="pill" id="modalCat"></span> · <span class="q-value" id="modalValue"></span> · <span class="timer" id="modalTimer">30s</span></div>
+        <div class="question" id="modalQuestion"></div>
+        <div class="answer" id="modalAnswer"></div>
+
+        <h3>Select answering team</h3>
+        <div class="select-team" id="teamSelect"></div>
+      </div>
+      <div class="actions">
+        <button id="revealBtn" class="secondary">Reveal Answer</button>
+        <button id="incorrectBtn" class="danger">Incorrect (−)</button>
+        <button id="correctBtn" class="success">Correct (+)</button>
+        <button id="closeBtn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Help Modal -->
+  <div id="helpBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+    <div class="modal">
+      <header><h2 id="helpTitle">How to Play</h2></header>
+      <div class="content">
+        <ul>
+          <li>Click any dollar tile to open the clue.</li>
+          <li>Select the team that buzzed in (or the team you decide to award).</li>
+          <li>Click <strong>Reveal Answer</strong>, then mark <strong>Correct</strong> or <strong>Incorrect</strong>.</li>
+          <li>Scores update automatically. Tiles become unavailable after use.</li>
+          <li>For <strong>Final Jeopardy</strong>, enter wagers (up to each team’s current score), reveal the final clue, then score outcomes.</li>
+          <li>Use <strong>Reset Game</strong> to clear the board and scores.</li>
+        </ul>
+        <p class="footer">This game is for training and fun—no legal or compliance advice. Keep it friendly and inclusive.</p>
+      </div>
+      <div class="actions"><button id="helpClose">Close</button></div>
+    </div>
+  </div>
+
+  <!-- Final Jeopardy Modal -->
+  <div id="finalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="finalTitle">
+    <div class="modal">
+      <header><h2 id="finalTitle">Final Jeopardy</h2></header>
+      <div class="content">
+        <div class="final-panel" id="wagerPanel"></div>
+        <hr />
+        <div><span class="pill">Final Category</span>: <strong id="finalCategory"></strong></div>
+        <div class="question" id="finalQuestion"></div>
+        <div class="answer" id="finalAnswer" style="display:none;"></div>
+      </div>
+      <div class="actions">
+        <button id="finalReveal" class="secondary">Reveal Final Answer</button>
+        <button id="finalScore" class="success">Score Final</button>
+        <button id="finalClose">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // -------------------------
+    // Game Data: Categories & Clues (Data Security)
+    // -------------------------
+    const GAME = {
+      title: "Jeopardy: Data Security Edition",
+      categories: [
+        {
+          name: "Passwords & Auth",
+          clues: [
+            { value: 100, q: "Recommended minimum length for a strong passphrase used for important accounts.", a: "At least 12 characters (longer is better)." },
+            { value: 200, q: "MFA stands for this security layer that adds something you know + have + are.", a: "Multi‑Factor Authentication." },
+            { value: 300, q: "Compared to SMS codes, this type of app-generated code is less vulnerable to SIM swapping.", a: "Authenticator app (TOTP) codes." },
+            { value: 400, q: "Security principle granting only the permissions needed to do a job.", a: "Least privilege." },
+            { value: 500, q: "Open standard enabling phishing‑resistant, passwordless logins with security keys or platform authenticators.", a: "FIDO2 / WebAuthn." },
+          ],
+        },
+        {
+          name: "Phishing & Social Eng.",
+          clues: [
+            { value: 100, q: "Common red flag: emails that demand immediate action and include typos or odd sender addresses.", a: "Phishing characteristics (urgency, errors, spoofed sender)." },
+            { value: 200, q: "Best practice when unsure about a link in an email.", a: "Don’t click—hover to inspect, verify out‑of‑band, and report." },
+            { value: 300, q: "Phishing campaign tailored to a specific person or org.", a: "Spear phishing." },
+            { value: 400, q: "The term for phone‑based phishing scams.", a: "Vishing." },
+            { value: 500, q: "Scam where criminals impersonate executives or vendors to trick finance into wiring funds.", a: "Business Email Compromise (BEC)." },
+          ],
+        },
+        {
+          name: "Data Handling & Privacy",
+          clues: [
+            { value: 100, q: "PII stands for this type of data.", a: "Personally Identifiable Information." },
+            { value: 200, q: "Collecting only the data required for a task is known as what?", a: "Data minimization." },
+            { value: 300, q: "Encrypting data at rest protects information stored where?", a: "On disks/databases (storage)." },
+            { value: 400, q: "Major regulation governing EU residents’ personal data.", a: "GDPR (General Data Protection Regulation)." },
+            { value: 500, q: "Tools that detect and prevent sensitive data leaving via email, web, or endpoints.", a: "Data Loss Prevention (DLP) solutions." },
+          ],
+        },
+        {
+          name: "Device & Network Sec.",
+          clues: [
+            { value: 100, q: "Keeping OS/apps up‑to‑date to fix vulnerabilities.", a: "Patching." },
+            { value: 200, q: "VPN stands for this.", a: "Virtual Private Network." },
+            { value: 300, q: "Risk of using public Wi‑Fi without protection.", a: "Traffic interception / Man‑in‑the‑Middle." },
+            { value: 400, q: "Security capability that monitors endpoints and enables rapid investigation and response.", a: "EDR (Endpoint Detection & Response)." },
+            { value: 500, q: "Architecture where no implicit trust is granted based on network location.", a: "Zero Trust (never trust, always verify)." },
+          ],
+        },
+        {
+          name: "Policies & Compliance",
+          clues: [
+            { value: 100, q: "Policy that outlines acceptable uses of company systems.", a: "AUP (Acceptable Use Policy)." },
+            { value: 200, q: "Documented steps to detect, respond, and recover from security events.", a: "Incident Response Plan." },
+            { value: 300, q: "Control that splits high‑risk tasks across multiple people.", a: "Separation of duties." },
+            { value: 400, q: "Program that helps employees recognize and report threats.", a: "Security awareness training." },
+            { value: 500, q: "International standard for an Information Security Management System.", a: "ISO/IEC 27001." },
+          ],
+        },
+      ],
+      final: {
+        category: "Foundations",
+        q: "This foundational information security model covers Confidentiality, Integrity, and Availability—name the model.",
+        a: "The CIA Triad."
+      }
+    };
+
+    // -------------------------
+    // Persistent State
+    // -------------------------
+    const initialState = {
+      teams: [
+        { id: 0, name: "Team 1", score: 0 },
+        { id: 1, name: "Team 2", score: 0 },
+        { id: 2, name: "Team 3", score: 0 },
+        { id: 3, name: "Team 4", score: 0 },
+      ],
+      used: {}, // key: "cIdx-qIdx": true
+      final: { wagers: {}, revealed: false, scored: false }
+    };
+
+    let state = loadState() || structuredClone(initialState);
+
+    function saveState(){ try{ localStorage.setItem("jeop_ds_state", JSON.stringify(state)); }catch(e){} }
+    function loadState(){ try{ return JSON.parse(localStorage.getItem("jeop_ds_state")); }catch(e){ return null; } }
+
+    // -------------------------
+    // Rendering: Teams & Board
+    // -------------------------
+    const teamsEl = document.querySelector(".teams");
+    const catsEl = document.getElementById("categories");
+    const gridEl = document.getElementById("grid");
+
+    function renderTeams(){
+      teamsEl.innerHTML = "";
+      state.teams.forEach(team=>{
+        const el = document.createElement("div");
+        el.className = "team";
+        el.innerHTML = `
+          <h3>
+            <input aria-label="Team name" type="text" value="${escapeHtml(team.name)}" data-team="${team.id}" />
+            <span class="score" id="score-${team.id}">$${team.score}</span>
+          </h3>
+          <div class="controls">
+            <button onclick="adjustScore(${team.id}, 100)">+100</button>
+            <button onclick="adjustScore(${team.id}, -100)" class="secondary">-100</button>
+          </div>
+        `;
+        teamsEl.appendChild(el);
+      });
+      teamsEl.querySelectorAll("input[type=text]").forEach(inp=>{
+        inp.addEventListener("input", (e)=>{
+          const id = +e.target.dataset.team;
+          state.teams.find(t=>t.id===id).name = e.target.value.trim() || `Team ${id+1}`;
+          saveState();
+          renderTeamSelect(); // update selects if open
+        });
+      });
+    }
+
+    function renderBoard(){
+      catsEl.innerHTML = "";
+      gridEl.innerHTML = "";
+      GAME.categories.forEach((cat, cIdx)=>{
+        const catDiv = document.createElement("div");
+        catDiv.className="cat";
+        catDiv.textContent = cat.name;
+        catsEl.appendChild(catDiv);
+      });
+      GAME.categories.forEach((cat, cIdx)=>{
+        cat.clues.forEach((clue, qIdx)=>{
+          const key = `${cIdx}-${qIdx}`;
+          const tile = document.createElement("div");
+          tile.className = "tile" + (state.used[key] ? " used" : "");
+          tile.setAttribute("role","button");
+          tile.setAttribute("tabindex", state.used[key] ? "-1" : "0");
+          tile.dataset.cIdx = cIdx;
+          tile.dataset.qIdx = qIdx;
+          tile.textContent = `$${clue.value}`;
+          if(!state.used[key]){
+            tile.addEventListener("click", openClue);
+            tile.addEventListener("keydown", (e)=>{ if(e.key==="Enter"||e.key===" "){ openClue.call(tile,e);} });
+          }
+          gridEl.appendChild(tile);
+        });
+      });
+    }
+
+    function adjustScore(teamId, delta){
+      const t = state.teams.find(t=>t.id===teamId);
+      t.score += delta;
+      document.getElementById(`score-${teamId}`).textContent = `$${t.score}`;
+      saveState();
+    }
+
+    // -------------------------
+    // Modal: Clue
+    // -------------------------
+    const modalBackdrop = document.getElementById("modalBackdrop");
+    const modalCat = document.getElementById("modalCat");
+    const modalValue = document.getElementById("modalValue");
+    const modalQuestion = document.getElementById("modalQuestion");
+    const modalAnswer = document.getElementById("modalAnswer");
+    const teamSelect = document.getElementById("teamSelect");
+    const revealBtn = document.getElementById("revealBtn");
+    const incorrectBtn = document.getElementById("incorrectBtn");
+    const correctBtn = document.getElementById("correctBtn");
+    const closeBtn = document.getElementById("closeBtn");
+    const timerEl = document.getElementById("modalTimer");
+
+    let activeClue = null;
+    let timerId = null;
+    let seconds = 30;
+
+    function openClue(){
+      const cIdx = +this.dataset.cIdx;
+      const qIdx = +this.dataset.qIdx;
+      const cat = GAME.categories[cIdx];
+      const clue = cat.clues[qIdx];
+
+      activeClue = { cIdx, qIdx, value: clue.value };
+      modalCat.textContent = cat.name;
+      modalValue.textContent = `$${clue.value}`;
+      modalQuestion.textContent = clue.q;
+      modalAnswer.textContent = `Answer: ${clue.a}`;
+      modalAnswer.style.display = "none";
+      revealBtn.disabled = false;
+      incorrectBtn.disabled = true;
+      correctBtn.disabled = true;
+
+      renderTeamSelect();
+
+      seconds = 30; timerEl.textContent = `${seconds}s`;
+      if(timerId) clearInterval(timerId);
+      timerId = setInterval(()=>{ seconds--; timerEl.textContent = `${seconds}s`; if(seconds<=0){ clearInterval(timerId); timerId=null; }}, 1000);
+
+      modalBackdrop.style.display = "flex";
+    }
+
+    function renderTeamSelect(){
+      teamSelect.innerHTML = "";
+      state.teams.forEach(t=>{
+        const wrap = document.createElement("label");
+        wrap.innerHTML = `
+          <input type="radio" name="answerTeam" value="${t.id}">
+          <span>${escapeHtml(t.name)}</span>
+          <span class="score" style="font-size:.95rem;">$${t.score}</span>
+        `;
+        teamSelect.appendChild(wrap);
+      });
+      const first = teamSelect.querySelector("input[type=radio]");
+      if(first) first.checked = true;
+    }
+
+    revealBtn.addEventListener("click", ()=>{
+      modalAnswer.style.display = "block";
+      incorrectBtn.disabled = false;
+      correctBtn.disabled = false;
+      revealBtn.disabled = true;
+    });
+
+    correctBtn.addEventListener("click", ()=>{
+      const teamId = getSelectedTeamId();
+      if(teamId==null) return;
+      adjustScore(teamId, activeClue.value);
+      markUsed(activeClue);
+      closeModal();
+    });
+
+    incorrectBtn.addEventListener("click", ()=>{
+      const teamId = getSelectedTeamId();
+      if(teamId==null) return;
+      adjustScore(teamId, -activeClue.value);
+      markUsed(activeClue);
+      closeModal();
+    });
+
+    function getSelectedTeamId(){
+      const inp = teamSelect.querySelector("input[type=radio]:checked");
+      return inp ? +inp.value : null;
+    }
+
+    function markUsed({cIdx,qIdx}){
+      state.used[`${cIdx}-${qIdx}`] = true;
+      saveState();
+      renderBoard();
+    }
+
+    function closeModal(){
+      modalBackdrop.style.display = "none";
+      if(timerId) { clearInterval(timerId); timerId=null; }
+      activeClue = null;
+    }
+    closeBtn.addEventListener("click", closeModal);
+    modalBackdrop.addEventListener("click", (e)=>{ if(e.target===modalBackdrop){ closeModal(); } });
+
+    // -------------------------
+    // Help Modal
+    // -------------------------
+    const helpBackdrop = document.getElementById("helpBackdrop");
+    const helpBtn = document.getElementById("helpBtn");
+    const helpClose = document.getElementById("helpClose");
+    helpBtn.addEventListener("click", ()=> helpBackdrop.style.display="flex");
+    helpClose.addEventListener("click", ()=> helpBackdrop.style.display="none");
+    helpBackdrop.addEventListener("click", (e)=>{ if(e.target===helpBackdrop){ helpBackdrop.style.display="none"; } });
+
+    // -------------------------
+    // Final Jeopardy
+    // -------------------------
+    const finalBackdrop = document.getElementById("finalBackdrop");
+    const finalBtn = document.getElementById("finalBtn");
+    const finalCategory = document.getElementById("finalCategory");
+    const finalQuestion = document.getElementById("finalQuestion");
+    const finalAnswer = document.getElementById("finalAnswer");
+    const finalReveal = document.getElementById("finalReveal");
+    const finalScore = document.getElementById("finalScore");
+    const finalClose = document.getElementById("finalClose");
+    const wagerPanel = document.getElementById("wagerPanel");
+
+    finalBtn.addEventListener("click", openFinal);
+    finalClose.addEventListener("click", ()=> finalBackdrop.style.display="none");
+    finalBackdrop.addEventListener("click", (e)=>{ if(e.target===finalBackdrop){ finalBackdrop.style.display="none"; } });
+
+    function openFinal(){
+      finalCategory.textContent = GAME.final.category;
+      finalQuestion.textContent = GAME.final.q;
+      finalAnswer.textContent = `Answer: ${GAME.final.a}`;
+      finalAnswer.style.display = "none";
+      finalReveal.disabled = false;
+      finalScore.disabled = true;
+      wagerPanel.innerHTML = "";
+      state.teams.forEach(t=>{
+        const max = Math.max(0, t.score);
+        const div = document.createElement("div");
+        div.innerHTML = `
+          <label class="pill" style="display:block;margin-bottom:6px;">${escapeHtml(t.name)} (Max: $${max})</label>
+          <input type="number" min="0" max="${max}" step="10" value="${state.final.wagers[t.id] || 0}" class="wager" data-team="${t.id}" aria-label="Wager for ${escapeHtml(t.name)}">
+          <div style="display:flex; gap:6px; margin-top:6px;">
+            <button class="secondary" onclick="autoWager(${t.id}, ${max}, 0.5)">50%</button>
+            <button class="secondary" onclick="autoWager(${t.id}, ${max}, 1)">Max</button>
+          </div>
+        `;
+        wagerPanel.appendChild(div);
+      });
+      finalBackdrop.style.display = "flex";
+    }
+
+    function autoWager(teamId, max, ratio){
+      const inp = wagerPanel.querySelector(`input[data-team="${teamId}"]`);
+      if(inp){ inp.value = Math.floor(max * ratio); }
+    }
+
+    finalReveal.addEventListener("click", ()=>{
+      // save wagers
+      wagerPanel.querySelectorAll("input.wager").forEach(inp=>{
+        const id = +inp.dataset.team;
+        const max = Math.max(0, state.teams.find(t=>t.id===id).score);
+        let val = parseInt(inp.value || "0", 10);
+        val = isNaN(val) ? 0 : Math.max(0, Math.min(val, max));
+        state.final.wagers[id] = val;
+      });
+      saveState();
+      finalAnswer.style.display = "block";
+      finalReveal.disabled = true;
+      finalScore.disabled = false;
+    });
+
+    finalScore.addEventListener("click", ()=>{
+      // Ask host to mark each team Correct/Incorrect
+      const resultOk = confirm("Score Final: Click OK to mark winners.\nYou will be asked for each team: OK = Correct (add wager), Cancel = Incorrect (subtract wager).");
+      if(!resultOk){
+        return;
+      }
+      for(const team of state.teams){
+        const wager = state.final.wagers[team.id] || 0;
+        const ok = confirm(`Did ${team.name} answer correctly?\nOK = Correct (+$${wager})\nCancel = Incorrect (−$${wager})`);
+        team.score += ok ? wager : -wager;
+        document.getElementById(`score-${team.id}`).textContent = `$${team.score}`;
+      }
+      state.final.scored = true;
+      saveState();
+      alert("Final Jeopardy scored! 🎉");
+    });
+
+    // -------------------------
+    // Reset
+    // -------------------------
+    const resetBtn = document.getElementById("resetBtn");
+    resetBtn.addEventListener("click", ()=>{
+      const ok = confirm("Reset the game board, scores, and wagers?");
+      if(!ok) return;
+      state = structuredClone(initialState);
+      saveState();
+      renderTeams();
+      renderBoard();
+    });
+
+    // -------------------------
+    // Utils
+    // -------------------------
+    function escapeHtml(str){ return str.replace(/[&<>'"]/g, c=>({ "&":"&amp;", "<":"&lt;", ">":"&gt;", "'":"&#39;", '"':"&quot;" }[c])); }
+
+    // -------------------------
+    // Init
+    // -------------------------
+    renderTeams();
+    renderBoard();
+  </script>
+</body>
+</html>
